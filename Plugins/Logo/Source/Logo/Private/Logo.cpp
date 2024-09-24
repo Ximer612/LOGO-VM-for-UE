@@ -2,12 +2,12 @@
 
 #include "Logo.h"
 #include "Misc/FileHelper.h"
-//#include "AssetRegistryModule.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #if WITH_EDITOR
 #include "Editor.h"
 #endif
-#include <Misc/OutputDeviceNull.h>
-#include <ImageUtils.h>
+#include "Misc/OutputDeviceNull.h"
+#include "ImageUtils.h"
 
 #define LOCTEXT_NAMESPACE "FLogoModule"
 
@@ -246,26 +246,9 @@ void FLogoVM::Move(const int32& MoveAmount)
 	{
 		Position += Direction * MoveAmount;
 		Position = Position.RoundToVector();
-	}
-
-	
+	}	
 }
 
-//void FLogoVM::SetRotation(const float RotationAmount)
-//{
-//	float RadRotationAmount = FMath::DegreesToRadians(RotationAmount);
-//
-//	float RadDirectionX = FMath::Acos(Direction.X);
-//	float RadDirectionY = FMath::Asin(Direction.Y);
-//
-//	Direction.X = FMath::Cos(RadRotationAmount + RadDirectionX);
-//	Direction.Y = FMath::Sin(RadRotationAmount + RadDirectionY);
-//
-//	Direction.Normalize();
-//
-//	UE_LOG(LogTemp, Warning, TEXT("My Rad Direction: %f , My Current Direction: %f , Turtle Direction: %s"), FMath::RadiansToDegrees(FMath::Atan2(RadDirectionY, RadDirectionX)), FMath::RadiansToDegrees(FMath::Atan2(Direction.Y, Direction.X)), *Direction.ToString());
-//
-//}
 
 void FLogoVM::AddRotation(const int RotationAmount)
 {
@@ -294,12 +277,12 @@ bool FLogoModule::Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar)
 {
 	if (FParse::Command(&Cmd, TEXT("Logo")))
 	{
-		FString FileName = FParse::Token(Cmd, false);
-		if(!FileName.IsEmpty())
+		FString InputFileName = FParse::Token(Cmd, false);
+		if (!InputFileName.IsEmpty())
 		{
-			UE_LOG(LogTemp, Error, TEXT("FileName= %s"), *FileName);
+			UE_LOG(LogTemp, Error, TEXT("FileName= %s"), *InputFileName);
 
-			TArray<FColor> Result = ULogoVMBlueprintFunctionLibrary::LogoExecuteSimpleFromFile(FileName, 16, 16);
+			TArray<FColor> Result = ULogoVMBlueprintFunctionLibrary::LogoExecuteSimpleFromFile(InputFileName, 16, 16);
 
 			UWorld* EditorWorld = GEditor->GetEditorWorldContext().World();
 
@@ -310,7 +293,9 @@ bool FLogoModule::Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar)
 
 			if (CubeClass->IsChildOf<AActor>())
 			{
-				for (int32 Index =0; Index < Result.Num(); Index++)
+				UE_LOG(LogTemp, Error, TEXT("Obj = %p"), CubeObject);
+
+				for (int32 Index = 0; Index < Result.Num(); Index++)
 				{
 					FTransform Transform;
 					Transform.SetLocation(FVector((Index % 16) * 100, (Index / 16) * 100, 1));
@@ -319,6 +304,7 @@ bool FLogoModule::Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar)
 
 					const FString Arg = FString::Printf(TEXT("SetColor %s"), *(Result[Index].ToString()));
 					Cube->CallFunctionByNameWithArguments(*Arg, OutputDeviceNull, nullptr,true);
+
 					//if (Result[Index].R == 0)
 					//{
 					//	FString Arg = FString::Printf(TEXT("SetColor(R=%u,G=%u,B=%u,A=%u)"), Result[Index].R, Result[Index].G, Result[Index].B);
@@ -329,13 +315,12 @@ bool FLogoModule::Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar)
 				}
 			}
 
-			//UPackage* NewPackage = CreatePackage(TEXT("/Game/Logo/Textures/LogoPackage"));
-			//FString FileName = FPackageName::LongPackageNameToFilename(NewPackage->GetPathName(), FPackageName::GetAssetPackageExtension());
-			//FCreateTexture2DParameters Params;
-			//UTexture2D* MyTexture = FImageUtils::CreateTexture2D(16, 16, Result, NewPackage, TEXT("LOGO Package"), RF_Public | RF_Standalone, Params);
-			//UPackage::SavePackage(NewPackage, MyTexture, RF_Public | RF_Standalone, *FileName);
-			//FAssetRegistryModule::AssetCreate(MyTexture);
-
+			UPackage* NewPackage = CreatePackage(TEXT("/Game/Logo/Textures/LogoPackage"));
+			FString OutputFileName = FPackageName::LongPackageNameToFilename(NewPackage->GetPathName(), FPackageName::GetAssetPackageExtension());
+			FCreateTexture2DParameters Params;
+			UTexture2D* MyTexture = FImageUtils::CreateTexture2D(16, 16, Result, NewPackage, TEXT("LOGO Package"), RF_Public | RF_Standalone, Params);
+			UPackage::SavePackage(NewPackage, MyTexture, RF_Public | RF_Standalone, *OutputFileName);
+			FAssetRegistryModule::AssetCreated(MyTexture);
 
 			return true;
 		}
@@ -347,5 +332,3 @@ bool FLogoModule::Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar)
 #undef LOCTEXT_NAMESPACE
 	
 IMPLEMENT_MODULE(FLogoModule, Logo)
-
-// logo E:\Download\turtle.logo
