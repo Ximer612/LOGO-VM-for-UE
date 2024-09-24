@@ -304,23 +304,8 @@ bool FLogoModule::Exec(UWorld* InWorld, const TCHAR* Cmd, FOutputDevice& Ar)
 
 					const FString Arg = FString::Printf(TEXT("SetColor %s"), *(Result[Index].ToString()));
 					Cube->CallFunctionByNameWithArguments(*Arg, OutputDeviceNull, nullptr,true);
-
-					//if (Result[Index].R == 0)
-					//{
-					//	FString Arg = FString::Printf(TEXT("SetColor(R=%u,G=%u,B=%u,A=%u)"), Result[Index].R, Result[Index].G, Result[Index].B);
-					//	Cube->CallFunctionByNameWithArguments(*Arg, OutputDeviceNull, nullptr, true);
-					//}
-
-					//UE_LOG(LogTemp, Error, TEXT("Color = %s"), *Color.ToString());
 				}
 			}
-
-			UPackage* NewPackage = CreatePackage(TEXT("/Game/Logo/Textures/LogoPackage"));
-			FString OutputFileName = FPackageName::LongPackageNameToFilename(NewPackage->GetPathName(), FPackageName::GetAssetPackageExtension());
-			FCreateTexture2DParameters Params;
-			UTexture2D* MyTexture = FImageUtils::CreateTexture2D(16, 16, Result, NewPackage, TEXT("LOGO Package"), RF_Public | RF_Standalone, Params);
-			UPackage::SavePackage(NewPackage, MyTexture, RF_Public | RF_Standalone, *OutputFileName);
-			FAssetRegistryModule::AssetCreated(MyTexture);
 
 			return true;
 		}
